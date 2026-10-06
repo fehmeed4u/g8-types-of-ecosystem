@@ -1,0 +1,582 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Biome Builders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Nunito:wght@700;800;900&display=swap">
+<style>
+/* Layout: sticky app bar + one centred working column; each ecosystem tints its own screens through --a. */
+:root {
+  --bg: #F2F5F3; --surface: #FFFFFF; --sunk: #E8EDEA; --fg: #17201D; --muted: #56635E; --line: #D5DDD9;
+  --brand: #22364D; --brand-fg: #FFFFFF; --good: #1C7C47; --bad: #B83A2B; --warn: #B07A0A;
+  --display: 'Nunito', 'Trebuchet MS', system-ui, sans-serif;
+  --body: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+  --radius: 14px;
+  --a: #22364D;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111614; --surface: #1A211E; --sunk: #232C28; --fg: #E6ECE9; --muted: #9AA8A2; --line: #303B37;
+  --brand: #9FB6D8; --brand-fg: #0F1724; --good: #5DCB8C; --bad: #F08A7C; --warn: #E7B24A; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111614; --surface: #1A211E; --sunk: #232C28; --fg: #E6ECE9; --muted: #9AA8A2; --line: #303B37;
+  --brand: #9FB6D8; --brand-fg: #0F1724; --good: #5DCB8C; --bad: #F08A7C; --warn: #E7B24A; color-scheme: dark }
+
+.eco-rainforest { --a: #1B7A45; } .eco-desert { --a: #C7751F; } .eco-grassland { --a: #7A8F14; }
+.eco-freshwater { --a: #1F7A9C; } .eco-tundra { --a: #5A5FB0; }
+[class*="eco-"], .tinted { --a-ink: color-mix(in oklab, var(--a) 72%, var(--fg)); --a-soft: color-mix(in oklab, var(--a) 13%, var(--surface)); --a-line: color-mix(in oklab, var(--a) 45%, var(--line)); }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 900; }
+h2 { font-size: 1.35rem; font-weight: 900; }
+h3 { font-size: 1.02rem; font-weight: 800; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid color-mix(in oklab, var(--a) 60%, var(--brand)); outline-offset: 2px; }
+input, textarea { font: inherit; color: var(--fg); background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 11px; width: 100%; box-sizing: border-box; }
+textarea { min-height: 70px; resize: vertical; }
+label { display: grid; gap: 4px; font-weight: 700; font-size: .86rem; color: var(--muted); }
+.eyebrow { font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* app bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--brand); color: var(--brand-fg); }
+.bar-in { max-width: 1120px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mark { font-family: var(--display); font-weight: 900; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 0; color: inherit; }
+.mark svg { width: 26px; height: 26px; }
+.bar .who { margin-left: auto; font-size: .85rem; opacity: .9; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 11px; font-weight: 800; font-size: .8rem; background: var(--a-soft); color: var(--a-ink); border: 1.5px solid var(--a-line); }
+.bar .chip { background: color-mix(in oklab, var(--brand-fg) 16%, var(--brand)); color: var(--brand-fg); border-color: transparent; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 60px; display: grid; gap: 20px; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-weight: 800; font-size: .88rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+.tab[aria-current="true"] { background: var(--a); color: #fff; border-color: var(--a); }
+.tab .tick { color: var(--good); }
+.tab[aria-current="true"] .tick { color: #fff; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.btn { border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 800; background: var(--a); color: #fff; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+.btn.ghost { background: transparent; color: var(--a-ink); border: 1.5px solid var(--a-line); }
+.btn.quiet { background: var(--sunk); color: var(--fg); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { font-size: .88rem; color: var(--muted); }
+.ok { color: var(--good); font-weight: 800; } .no { color: var(--bad); font-weight: 800; }
+
+/* home */
+.hero { display: grid; gap: 10px; padding-block: 10px 4px; }
+.hero p { max-width: 62ch; color: var(--muted); font-size: 1.02rem; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.role { text-align: left; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 8px; align-content: start; }
+.role:hover { border-color: var(--brand); }
+.role .ic { font-size: 1.9rem; }
+.role p { color: var(--muted); font-size: .9rem; }
+.how { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.how div { background: var(--sunk); border-radius: 12px; padding: 12px 14px; font-size: .88rem; }
+.how b { display: block; font-family: var(--display); font-size: .95rem; margin-bottom: 2px; }
+.ecostrip { display: flex; height: 8px; border-radius: 99px; overflow: hidden; }
+.ecostrip span { flex: 1; background: var(--a); }
+
+/* ecosystem picker */
+.ecos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.eco-pick { border: 2px solid var(--a-line); background: var(--a-soft); border-radius: var(--radius); padding: 14px; text-align: left; display: grid; gap: 4px; }
+.eco-pick[aria-pressed="true"] { border-color: var(--a); box-shadow: 0 0 0 3px color-mix(in oklab, var(--a) 30%, transparent); }
+.eco-pick .ic { font-size: 1.8rem; } .eco-pick h3 { color: var(--a-ink); }
+.eco-pick span { font-size: .82rem; color: var(--muted); }
+
+/* expert card */
+.xhead { border-radius: var(--radius); padding: 18px; color: #fff; background: linear-gradient(135deg, var(--a), color-mix(in oklab, var(--a) 60%, #000)); display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.xhead .ic { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 1.8rem; background: rgba(0,0,0,.22); border: 2px solid rgba(255,255,255,.5); }
+.xhead .badge { margin-left: auto; background: #fff; color: color-mix(in oklab, var(--a) 70%, #000); border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: .85rem; }
+.pics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pic { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 16 / 9; max-width: 100%; background: var(--a-soft); }
+.pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pic .cap { position: absolute; left: 8px; bottom: 8px; background: var(--a); color: #fff; font-weight: 800; font-size: .76rem; padding: 4px 10px; border-radius: 999px; }
+.pic.ph { display: grid; place-items: center; text-align: center; padding: 14px; background: linear-gradient(160deg, var(--a-soft), color-mix(in oklab, var(--a) 28%, var(--surface))); }
+.pic.ph .big { font-size: 2.2rem; } .pic.ph p { font-size: .8rem; color: var(--muted); max-width: 32ch; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.fact { border: 1.5px solid var(--a-line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.fact b { display: block; background: var(--a); color: #fff; padding: 5px 10px; font-size: .8rem; }
+.fact p { padding: 8px 10px; font-size: .9rem; }
+.chain { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; }
+.link { border: 2px solid var(--k); border-radius: 10px; overflow: hidden; min-width: 120px; flex: 1; background: var(--surface); }
+.link b { display: block; background: var(--k); color: #fff; font-size: .74rem; padding: 3px 8px; }
+.link span { display: block; padding: 6px 8px; font-weight: 700; }
+.arrow { align-self: center; font-weight: 900; color: var(--muted); }
+.k-Producer { --k: #1C8A4C; } .k-Primary { --k: #C98A00; } .k-Secondary { --k: #D35B22; } .k-Tertiary { --k: #B5155A; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.list { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+.list h3 { color: #fff; padding: 7px 12px; font-size: .92rem; }
+.list ul { margin: 0; padding: 10px 12px 12px 30px; display: grid; gap: 4px; font-size: .92rem; }
+.list.good h3 { background: #1C7C47; } .list.bad h3 { background: #B83A2B; }
+.terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.term { border: 1.5px solid var(--a-line); border-radius: 12px; padding: 9px 11px; background: var(--surface); }
+.term b { color: var(--a-ink); display: block; }
+.term span { font-size: .88rem; color: var(--muted); }
+.mistake { border-left: 6px solid var(--warn); background: color-mix(in oklab, var(--warn) 12%, var(--surface)); border-radius: 10px; padding: 12px 14px; }
+.mistake b { color: color-mix(in oklab, var(--warn) 70%, var(--fg)); }
+
+/* quiz */
+.q { display: grid; gap: 8px; }
+.opts { display: grid; gap: 6px; }
+.opt { text-align: left; border: 1.5px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 12px; }
+.opt[data-state="right"] { border-color: var(--good); background: color-mix(in oklab, var(--good) 14%, var(--surface)); }
+.opt[data-state="wrong"] { border-color: var(--bad); background: color-mix(in oklab, var(--bad) 12%, var(--surface)); }
+.cert { border: 2px dashed var(--a); background: var(--a-soft); border-radius: var(--radius); padding: 16px; display: flex; gap: 12px; align-items: center; }
+.cert .ic { font-size: 2.2rem; }
+
+/* passport */
+.pp { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.ppbox { border: 2px solid var(--a-line); border-radius: var(--radius); padding: 14px; background: var(--surface); display: grid; gap: 9px; }
+.ppbox h3 { color: var(--a-ink); display: flex; gap: 8px; align-items: center; }
+.ppbox.mine { border-color: var(--a); box-shadow: 0 0 0 3px color-mix(in oklab, var(--a) 22%, transparent); }
+.chainin { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 480px) { .chainin { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* poster */
+.poster-wrap { overflow-x: auto; }
+.poster { width: 100%; min-width: 640px; height: auto; display: block; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
+.poster .piece { cursor: pointer; transition: fill-opacity .2s; }
+.poster .piece:hover { fill-opacity: .32; }
+.poster .piece.sel { fill-opacity: .4; stroke-width: 2.4; }
+.pcard { width: 100%; height: 100%; box-sizing: border-box; background: var(--surface); border: .6px solid var(--a); border-radius: 3px; padding: 2.5px 3.5px; font: 4.1px/1.32 var(--body); color: var(--fg); overflow: hidden; }
+.pcard .t { font: 900 5.4px/1.2 var(--display); color: var(--a-ink); margin-bottom: 1px; }
+.pcard .l { color: var(--muted); font-weight: 800; font-size: 3.4px; text-transform: uppercase; letter-spacing: .04em; }
+.pcard .e { color: var(--muted); font-style: italic; }
+.hubtxt { font: 900 8px var(--display); fill: var(--fg); }
+.hubsub { font: 600 4.6px var(--body); fill: var(--muted); }
+.editor { border: 2px solid var(--a); }
+.pieces-status { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* sort */
+.deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.card { text-align: left; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); padding: 10px 12px; display: grid; gap: 4px; }
+.card b { font-family: var(--display); font-size: 1rem; }
+.card span { font-size: .84rem; color: var(--muted); }
+.card[aria-pressed="true"] { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 30%, transparent); }
+.zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.zone { border: 2px solid var(--a-line); background: var(--a-soft); border-radius: var(--radius); padding: 10px; display: grid; gap: 6px; align-content: start; min-height: 120px; text-align: left; }
+.zone.ready { border-style: dashed; border-color: var(--a); }
+.zone h3 { color: var(--a-ink); font-size: .95rem; }
+.placed { display: flex; flex-wrap: wrap; gap: 5px; }
+.pchip { border: 1.5px solid var(--a-line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 3px 10px; font-size: .8rem; font-weight: 700; }
+.pchip.right { border-color: var(--good); } .pchip.wrong { border-color: var(--bad); color: var(--bad); }
+.score { font-family: var(--display); font-weight: 900; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+
+/* teacher */
+.stage { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 820px) { .stage { grid-template-columns: 1fr; } }
+.clock { font-family: var(--display); font-weight: 900; font-size: clamp(3.5rem, 11vw, 7rem); line-height: 1; font-variant-numeric: tabular-nums; color: var(--a-ink); }
+.clock.late { color: var(--bad); }
+.progress { height: 10px; background: var(--sunk); border-radius: 99px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--a); }
+.phase-list { display: grid; gap: 4px; }
+.ph-item { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; text-align: left; border: 0; background: transparent; padding: 7px 10px; border-radius: 10px; align-items: center; }
+.ph-item[aria-current="true"] { background: var(--a-soft); }
+.ph-item .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--a); }
+.ph-item small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage-img { border-radius: var(--radius); width: 100%; aspect-ratio: 16 / 9; object-fit: cover; max-width: 100%; }
+.big-title { font-size: clamp(1.8rem, 4.4vw, 3rem); color: var(--a-ink); }
+.stage ul { margin: 0; padding-left: 22px; display: grid; gap: 6px; font-size: 1.05rem; }
+.quote { font-size: 1.12rem; font-weight: 700; }
+.remember { background: var(--a-soft); border-radius: 10px; padding: 10px 14px; font-size: .95rem; }
+.confirm { color: var(--bad); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+@keyframes pop { from { transform: scale(.96); opacity: .4; } to { transform: none; opacity: 1; } }
+.pop { animation: pop .25s ease-out; }
+</style>
+
+<header class="bar"><div class="bar-in">
+  <button class="mark" data-act="home" aria-label="Biome Builders home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 16a12 12 0 0 1 12-12v12z" fill="#7FCF96"/><path d="M16 4a12 12 0 0 1 12 12H16z" fill="#E8A65A"/><path d="M28 16a12 12 0 0 1-12 12V16z" fill="#C5D45A"/><path d="M16 28A12 12 0 0 1 4 16h12z" fill="#6BB6D6"/><circle cx="16" cy="16" r="5" fill="#B9BCF0"/></svg>
+    Biome Builders
+  </button>
+  <div class="who" id="who"></div>
+</div></header>
+<main class="wrap" id="app"></main>
+
+<script>
+const DATA = {"ecos": [{"key": "rainforest", "name": "Rainforest", "icon": "🌳", "accent": "#1B5E3A", "letter": "A", "badge": "🌧️ Hot & wet", "climate": "Hot and very wet all year — over 2000mm of rain, temperatures rarely below 20°C.", "population": "The most crowded ecosystem on Earth for species count — a single hectare can hold more tree species than all of North America.", "species_types": "Towering canopy trees, vines and epiphytes, and an enormous range of insects, amphibians, birds, and mammals packed into layers from floor to canopy.", "key_features": ["Four distinct layers: forest floor, understory, canopy, emergent layer", "Nutrient-poor soil — nutrients are locked up in the living plants, not the ground", "Constant warmth and rainfall drive year-round growth"], "special": "It holds more species in one small area than almost anywhere else on Earth — biodiversity is its whole identity.", "facts": [["Climate", "25–30°C all year and over 2000mm of rain."], ["Population", "Huge variety, few of each — over half of all land species live here."], ["What makes it special", "The most biodiverse land ecosystem on Earth."]], "chain": [["Producer", "leaves"], ["Primary consumer", "caterpillar"], ["Secondary consumer", "tree frog"], ["Tertiary consumer", "tree snake"]], "chain_note": "Decomposers (fungi, termites, bacteria) recycle dead material so fast that the soil stays thin and poor.", "adaptations": ["Drip-tip leaves shed heavy rain", "Buttress roots prop up tall trees in shallow soil", "Bright warning colours (poison dart frog)", "Climbing and gliding to live in the canopy"], "threats": ["Clearing for farms, cattle and palm oil", "Logging and mining", "Forest broken into small, cut-off patches", "Climate change drying the forest"], "key_terms": [["Canopy", "the thick upper layer of leaves that catches most of the sunlight"], ["Biodiversity", "the variety of different species living in an area"], ["Epiphyte", "a plant that grows on another plant for support, not food"]], "tip": "Rainforest soil is NOT rich. Most nutrients are stored in the living plants, so the soil is thin and poor. That's why cleared rainforest makes bad farmland.", "panels": [{"caption": "The landscape", "desc": "Layered rainforest from the dark forest floor up to the sunlit emergent trees", "img": "img/sheet-01-A.jpg"}, {"caption": "Who lives here", "desc": "Toucan, jaguar, poison dart frog and orangutan among the canopy", "img": "img/sheet-01-B.jpg"}, {"caption": "Survival trick", "desc": "Close-up of drip-tip leaves shedding rain and huge buttress roots", "img": "img/sheet-01-C.jpg"}, {"caption": "Under threat", "desc": "Edge of cleared, burned land next to intact forest", "img": "img/sheet-01-D.jpg"}], "piece": {"d": "M 181.90 128.29 C 151.97 124.32, 137.78 104.65, 119.51 88.03 C 86.27 88.35, 94.02 47.83, 81.00 27.00 L 339.00 27.00 C 307.58 27.22, 326.74 76.89, 293.07 73.93 C 275.98 94.15, 277.23 131.54, 237.89 128.50 C 230.60 122.59, 219.33 110.43, 210.00 110.40 C 200.67 110.36, 189.05 122.35, 181.90 128.29 Z", "card": [205.7, 66.4, 130.1, 68.5]}}, {"key": "desert", "name": "Desert", "icon": "🌵", "accent": "#C97B2E", "letter": "B", "badge": "☀️ Hot & dry", "climate": "Under 250mm of rain a year, with huge temperature swings — scorching by day, freezing at night.", "population": "Low population density — species survive in small, spread-out numbers because water and food are scarce.", "species_types": "Plants and animals built around water storage and heat control: succulents, burrowing reptiles, and nocturnal mammals.", "key_features": ["Very low, unpredictable rainfall", "Extreme day-to-night temperature range", "Sandy, rocky, or salt-crusted soil that drains fast"], "special": "Life here isn't about abundance — it's about extreme adaptation. Almost everything living here has a specific trick for saving water or escaping heat.", "facts": [["Climate", "Under 250mm of rain a year. Scorching by day, cold at night."], ["Population", "Few individuals, spread far apart — water and food are scarce."], ["What makes it special", "Every species has a trick for saving water or beating the heat."]], "chain": [["Producer", "desert grass seeds"], ["Primary consumer", "kangaroo rat"], ["Secondary consumer", "rattlesnake"], ["Tertiary consumer", "hawk"]], "chain_note": "Many desert animals get almost all of their water from the food they eat.", "adaptations": ["Cacti store water in thick stems; spines replace leaves", "Nocturnal animals hunt in the cool night", "Big ears (fennec fox) let body heat escape", "Deep or wide roots catch every drop of rain"], "threats": ["Water pumped out for cities and farms", "Off-road vehicles crush plants and burrows", "Longer droughts from climate change", "Invasive grasses that fuel wildfires"], "key_terms": [["Adaptation", "a feature that helps an organism survive in its habitat"], ["Nocturnal", "active at night and resting during the day"], ["Arid", "very dry; receiving very little rainfall"]], "tip": "A desert is defined by LOW RAINFALL, not by heat. The largest desert on Earth is Antarctica — and it's freezing.", "panels": [{"caption": "The landscape", "desc": "Rolling sand dunes and a rocky plain at golden hour, with tall cacti", "img": "img/sheet-02-A.jpg"}, {"caption": "Who lives here", "desc": "Camel, fennec fox, rattlesnake and scorpion in the desert", "img": "img/sheet-02-B.jpg"}, {"caption": "Survival trick", "desc": "A cactus swollen with stored water, and a fennec fox's giant ears", "img": "img/sheet-02-C.jpg"}, {"caption": "Under threat", "desc": "Water pipeline and tyre tracks cutting across fragile desert ground", "img": "img/sheet-02-D.jpg"}], "piece": {"d": "M 237.89 128.50 C 277.23 131.54, 275.98 94.15, 293.07 73.93 C 326.74 76.89, 307.58 27.22, 339.00 27.00 L 405.00 27.00 L 405.00 219.00 C 370.54 224.74, 341.30 217.20, 322.20 178.01 C 304.35 155.87, 271.43 183.00, 251.46 169.79 C 254.72 162.48, 256.05 152.73, 253.79 145.85 C 251.53 138.97, 245.19 134.41, 237.89 128.50 Z", "card": [340.3, 130.6, 112.5, 59.2]}}, {"key": "grassland", "name": "Grassland", "icon": "🌾", "accent": "#8FA31E", "letter": "C", "badge": "🌦️ Wet & dry seasons", "climate": "Moderate rainfall (250–900mm/year) — too much for a desert, too little to grow a forest.", "population": "Supports some of the largest herds of large animals on Earth — huge populations moving together across open land.", "species_types": "Dominated by grasses rather than trees, plus large grazing herbivores and the predators that follow them.", "key_features": ["Open, mostly treeless land dominated by grasses", "Seasonal rainfall pattern with a dry season and a wet season", "Frequent natural fires and grazing keep trees from taking over"], "special": "It's shaped by disturbance — fire and grazing aren't threats here, they're the reason grassland stays grassland instead of turning into forest.", "facts": [["Climate", "250–900mm of rain, with a wet season and a long dry season."], ["Population", "Enormous herds — over a million wildebeest migrate across the Serengeti."], ["What makes it special", "Fire and grazing keep it grassy instead of turning into forest."]], "chain": [["Producer", "grass"], ["Primary consumer", "zebra"], ["Secondary consumer", "lion"]], "chain_note": "Vultures and dung beetles clean up what the lions leave, returning nutrients to the soil.", "adaptations": ["Grass grows from its base, so it regrows after grazing or fire", "Deep roots survive drought and fire underground", "Grazers live in herds — safety in numbers", "Fast runners and burrowers survive on open ground"], "threats": ["Ploughed up for crops — most North American prairie is gone", "Overgrazing by farm animals", "Stopping natural fires lets shrubs take over", "Roads and fences block migrations"], "key_terms": [["Herbivore", "an animal that eats only plants"], ["Migration", "a seasonal journey to find food or water"], ["Savanna", "a tropical grassland with scattered trees"]], "tip": "Grassland fires are not always disasters. Natural fires clear dead growth and stop trees taking over — the grass regrows from its roots within weeks.", "panels": [{"caption": "The landscape", "desc": "Open golden savanna stretching to the horizon with flat-topped acacia trees", "img": "img/sheet-03-A.jpg"}, {"caption": "Who lives here", "desc": "Zebra herd grazing while a lion watches from the long grass", "img": "img/sheet-03-B.jpg"}, {"caption": "Survival trick", "desc": "Fresh green grass shoots regrowing from the roots after a fire", "img": "img/sheet-03-C.jpg"}, {"caption": "Under threat", "desc": "Tractor ploughing grassland into neat crop fields", "img": "img/sheet-03-D.jpg"}], "piece": {"d": "M 251.46 169.79 C 271.43 183.00, 304.35 155.87, 322.20 178.01 C 341.30 217.20, 370.54 224.74, 405.00 219.00 L 405.00 282.00 L 210.00 282.00 C 181.06 268.51, 190.13 255.42, 207.27 242.33 C 202.87 229.51, 205.61 217.06, 210.00 204.61 C 217.97 204.76, 227.32 195.52, 234.23 189.71 C 241.14 183.91, 248.20 177.10, 251.46 169.79 Z", "card": [275.4, 242.7, 123.3, 64.9]}}, {"key": "freshwater", "name": "Freshwater", "icon": "💧", "accent": "#1F7A9C", "letter": "D", "badge": "💧 Not salty", "climate": "Defined by water, not air temperature — rivers, lakes, ponds and wetlands found in almost every climate zone on Earth.", "population": "Small in total area (under 1% of Earth's water) but supports a hugely disproportionate share of all known species.", "species_types": "Fish, amphibians, aquatic insects and their larvae, water plants, and the mammals and birds that depend on them.", "key_features": ["Water that isn't salty — rivers, lakes, ponds, streams and wetlands", "Oxygen levels and water flow shape which species can live where", "Directly connected to — and easily polluted by — the land around it"], "special": "It's the smallest ecosystem by area on this poster but one of the richest per square metre — and the one most directly affected by what humans do on land nearby.", "facts": [["Climate", "Found in every climate — defined by water, not weather."], ["Population", "Under 1% of Earth's surface, yet home to about 10% of known species."], ["What makes it special", "Rivers link land to sea — what happens on land ends up in the water."]], "chain": [["Producer", "algae"], ["Primary consumer", "mayfly nymph"], ["Secondary consumer", "trout"], ["Tertiary consumer", "otter"]], "chain_note": "Tiny algae and plankton are the hidden producers that feed almost everything here.", "adaptations": ["Fish use gills to take oxygen from the water", "Webbed feet and waterproof fur (otter, beaver)", "Floating leaves with air spaces (water lily, duckweed)", "Insect young live underwater, adults fly"], "threats": ["Fertiliser runoff causes algal blooms that use up oxygen", "Dams block fish migration", "Plastic and sewage pollution", "Invasive species released from aquariums"], "key_terms": [["Aquatic", "living in or near water"], ["Algal bloom", "a rapid overgrowth of algae caused by too many nutrients"], ["Wetland", "land soaked or covered by shallow water for much of the year"]], "tip": "Not all water is fresh! Only about 3% of Earth's water is fresh, and most of that is frozen in ice. Rivers and lakes hold only a tiny fraction.", "panels": [{"caption": "The landscape", "desc": "A river winding into a calm lake edged with reeds", "img": "img/sheet-04-A.jpg"}, {"caption": "Who lives here", "desc": "Otter, heron, fish and dragonflies around the water", "img": "img/sheet-04-B.jpg"}, {"caption": "Survival trick", "desc": "A beaver building its dam across a stream", "img": "img/sheet-04-C.jpg"}, {"caption": "Under threat", "desc": "Green algal bloom spreading from a pipe pouring into a pond", "img": "img/sheet-04-D.jpg"}], "piece": {"d": "M 210.00 204.61 C 205.61 217.06, 202.87 229.51, 207.27 242.33 C 190.13 255.42, 181.06 268.51, 210.00 282.00 L 15.00 282.00 L 15.00 219.00 C 39.91 220.21, 65.95 227.18, 80.49 198.26 C 112.15 197.27, 136.39 176.03, 165.72 170.69 C 168.93 177.82, 179.04 183.17, 186.42 188.83 C 193.80 194.48, 202.03 204.47, 210.00 204.61 Z", "card": [129.2, 246.8, 113.5, 59.7]}}, {"key": "tundra", "name": "Tundra", "icon": "❄️", "accent": "#5A5FB0", "letter": "E", "badge": "❄️ Freezing & windy", "climate": "Long, dark winters that can drop below −30°C, and a short, cool summer. Very little rain or snow falls.", "population": "Few species live here, but some gather in huge numbers — caribou herds can number hundreds of thousands.", "species_types": "Low mosses, lichens and dwarf shrubs, grazing mammals like caribou and musk ox, and predators such as arctic foxes, wolves and snowy owls.", "key_features": ["Permafrost: the ground below the surface stays frozen all year", "No trees — roots can't grow into the frozen ground and the growing season is too short", "Summer sun barely sets, winter sun barely rises"], "special": "It's the coldest ecosystem on the poster — almost everything that lives here is built to hold on to heat.", "facts": [["Climate", "Winters below −30°C; a short, cool summer. Very little rain or snow."], ["Population", "Few species, some in huge herds — caribou can number hundreds of thousands."], ["What makes it special", "Permafrost: the ground below stays frozen all year round."]], "chain": [["Producer", "moss & lichen"], ["Primary consumer", "lemming"], ["Secondary consumer", "snowy owl"]], "chain_note": "Lemming numbers boom and crash every few years — and the owls and foxes that eat them rise and fall too.", "adaptations": ["Thick fur, feathers and fat trap body heat", "Short ears, legs and tails lose less heat", "White winter coats for camouflage in snow", "Plants grow low and flower fast in the short summer"], "threats": ["A warming climate thawing the permafrost", "Oil, gas and mining development", "Shrubs and southern species moving north", "Pollution carried north by winds and currents"], "key_terms": [["Permafrost", "ground that stays frozen all year, sometimes for thousands of years"], ["Lichen", "a partnership of a fungus and an alga that grows on rocks and soil"], ["Insulation", "a layer of fur, fat or feathers that slows down heat loss"]], "tip": "The tundra is NOT covered in snow all year. In summer the top layer of soil thaws into boggy ground full of flowers, insects and nesting birds — only the permafrost below stays frozen.", "panels": [{"caption": "The landscape", "desc": "Flat, treeless tundra with low shrubs and snow patches under a pale sky", "img": null}, {"caption": "Who lives here", "desc": "Caribou herd, arctic fox, snowy owl and musk ox on the open tundra", "img": null}, {"caption": "Survival trick", "desc": "Arctic fox in its thick white winter coat, curled up with its tail over its face", "img": null}, {"caption": "Under threat", "desc": "Thawing permafrost: ground slumping into pools beside a leaning cabin", "img": null}], "piece": {"d": "M 165.72 170.69 C 136.39 176.03, 112.15 197.27, 80.49 198.26 C 65.95 227.18, 39.91 220.21, 15.00 219.00 L 15.00 27.00 L 81.00 27.00 C 94.02 47.83, 86.27 88.35, 119.51 88.03 C 137.78 104.65, 151.97 124.32, 181.90 128.29 C 174.76 134.24, 169.83 139.01, 167.13 146.07 C 164.43 153.14, 162.50 163.57, 165.72 170.69 Z", "card": [79.7, 141.6, 113.5, 59.7]}}], "species": [{"name": "Jaguar", "eco": "rainforest", "clue": "A powerful spotted big cat that hunts by ambush from dense cover, equally at home stalking on the ground or climbing after prey."}, {"name": "Poison dart frog", "eco": "rainforest", "clue": "A tiny, brilliantly coloured amphibian whose skin produces toxins strong enough to warn off almost every predator."}, {"name": "Toucan", "eco": "rainforest", "clue": "A bird with an oversized, colourful bill it uses to reach fruit at the very ends of thin branches high above the ground."}, {"name": "Orangutan", "eco": "rainforest", "clue": "A large, slow-moving primate that spends almost its entire life moving hand-over-hand through a thick, tangled canopy."}, {"name": "Strangler fig", "eco": "rainforest", "clue": "A plant that starts life high in another tree's branches and slowly sends roots down to the ground, eventually enclosing its host."}, {"name": "Camel", "eco": "desert", "clue": "A large mammal that can drink over 100 litres in one go and then go for a week or more without water again, storing fat (not water) in its hump."}, {"name": "Fennec fox", "eco": "desert", "clue": "A small fox with enormous ears that radiate away extra body heat, and thick fur on its paws to handle scorching ground."}, {"name": "Saguaro cactus", "eco": "desert", "clue": "A tall, pleated plant that can expand like an accordion to store huge amounts of water after rare rainfall."}, {"name": "Rattlesnake", "eco": "desert", "clue": "A reptile that hunts mostly at night to avoid extreme daytime heat, using heat-sensing pits to find warm-blooded prey in the dark."}, {"name": "Scorpion", "eco": "desert", "clue": "An armoured, nocturnal invertebrate that can slow its own metabolism to survive for over a year without eating."}, {"name": "Lion", "eco": "grassland", "clue": "A large predator that hunts in cooperative family groups across wide open land where prey has nowhere to hide."}, {"name": "Zebra", "eco": "grassland", "clue": "A striped grazer that lives in large herds for safety in numbers, constantly on the move to find fresh grass."}, {"name": "Bison", "eco": "grassland", "clue": "A massive grazing mammal that once moved across open plains in herds numbering in the millions."}, {"name": "Prairie dog", "eco": "grassland", "clue": "A burrowing rodent that lives in huge underground colonies beneath open grass, posting lookouts to watch for predators."}, {"name": "Acacia tree", "eco": "grassland", "clue": "A thorny, flat-topped tree adapted to survive both browsing animals and regular fires sweeping through open land."}, {"name": "Otter", "eco": "freshwater", "clue": "A sleek, webbed-footed mammal that hunts fish and shellfish in rivers and lakes, using a dense waterproof coat to stay warm."}, {"name": "Largemouth bass", "eco": "freshwater", "clue": "A predatory fish that relies on dissolved oxygen in the water and ambushes smaller prey near submerged plants."}, {"name": "Beaver", "eco": "freshwater", "clue": "A mammal that builds dams across streams, deliberately changing the flow of water to create the pond habitat it needs."}, {"name": "Dragonfly nymph", "eco": "freshwater", "clue": "An immature insect that lives entirely underwater, breathing through gills, before eventually climbing out to grow wings."}, {"name": "Duckweed", "eco": "freshwater", "clue": "A tiny floating plant that carpets the still surface of ponds, absorbing nutrients directly from the water below it."}, {"name": "Caribou", "eco": "tundra", "clue": "A large deer with wide hooves that work like snowshoes. It migrates hundreds of kilometres a year and scrapes through snow to reach lichen."}, {"name": "Arctic fox", "eco": "tundra", "clue": "A small fox whose coat turns from brown in summer to pure white in winter, with short ears and legs that lose less body heat."}, {"name": "Snowy owl", "eco": "tundra", "clue": "A large white owl that hunts in daylight during summers when the sun barely sets, and nests on bare ground because there are no tall trees."}, {"name": "Musk ox", "eco": "tundra", "clue": "A shaggy grazer with extremely long, thick fur. When wolves attack, the herd forms a tight circle facing outwards."}, {"name": "Arctic willow", "eco": "tundra", "clue": "A ‘tree’ that grows only a few centimetres tall, creeping along the ground out of the freezing wind above frozen soil."}], "hub": "M 251.46 169.79 C 248.20 177.10, 241.14 183.91, 234.23 189.71 C 227.32 195.52, 217.97 204.76, 210.00 204.61 C 202.03 204.47, 193.80 194.48, 186.42 188.83 C 179.04 183.17, 168.93 177.82, 165.72 170.69 C 162.50 163.57, 164.43 153.14, 167.13 146.07 C 169.83 139.01, 174.76 134.24, 181.90 128.29 C 189.05 122.35, 200.67 110.36, 210.00 110.40 C 219.33 110.43, 230.60 122.59, 237.89 128.50 C 245.19 134.41, 251.53 138.97, 253.79 145.85 C 256.05 152.73, 254.72 162.48, 251.46 169.79 Z", "phases": [{"tag": "Phase 1 · 0–5 min", "title": "The Mission", "accent": "#2B3A67", "quote": "“Five ecosystems. Five teams of experts. One planet-sized jigsaw to build before the bell.”", "sub": null, "bullets": ["Listen for the mission briefing.", "Join your expert group: Rainforest, Desert, Grassland, Freshwater or Tundra.", "Collect your Expert Card and your Notes Passport.", "Your ecosystem's colour is YOUR colour for the whole lesson."], "exit": null, "remember": "Remember: every home group needs one expert from each ecosystem — so every expert matters.", "img": "img/sheet-05-A.jpg"}, {"tag": "Phase 2 · 5–20 min", "title": "Expert Huddle", "accent": "#1B7A45", "quote": "Become the class expert on your ecosystem.", "sub": null, "bullets": ["Read your Expert Card together — every picture, every box.", "Agree the 5 big ideas: climate, population, species, key features, what makes it special.", "Fill in YOUR box of the Notes Passport.", "Plan your teach-back: one hook fact and one question for your group."], "exit": null, "remember": "Remember: you'll be the ONLY expert in your home group — everyone must be able to teach it alone.", "img": "img/sheet-05-B.jpg"}, {"tag": "Phase 3 · 20–25 min", "title": "Home Groups", "accent": "#C7751F", "quote": "Split up. Find one expert from every ecosystem.", "sub": null, "bullets": ["Move to your home group table.", "Check: is every ecosystem there? If one is missing, tell your teacher.", "Collect one A3 Ecosystem Poster for your group.", "Each expert claims the wavy jigsaw piece in their colour."], "exit": null, "remember": "Remember: your jigsaw piece is yours — nobody else writes in it.", "img": "img/sheet-05-C.jpg"}, {"tag": "Phase 4 · 25–40 min", "title": "Teach & Build", "accent": "#1F7A9C", "quote": "About 3 minutes each. Teach it, then build it.", "sub": null, "bullets": ["Expert: teach your ecosystem, then fill your jigsaw piece on the poster.", "Listeners: fill in that ecosystem's box in your Notes Passport.", "Ask the expert one question before they finish.", "Rotate until all five jigsaw pieces are complete."], "exit": null, "remember": "Remember: if it isn't on the poster or in your passport, you can't use it in the challenges.", "img": "img/sheet-05-D.jpg"}, {"tag": "Challenge 1 · 40–44 min", "title": "Species Sort", "accent": "#6F8A12", "quote": "25 species. 5 ecosystems. Only clues — no answers.", "sub": "Sort every Species Card onto the right jigsaw piece.", "bullets": ["Deal the Species Cards out around the group.", "Read each clue aloud before placing the card.", "The expert for that ecosystem has the final say — but must give a reason."], "exit": null, "remember": "Justify with an adaptation, not a guess: “It stores water, so it belongs in the Desert.”", "img": "img/sheet-06-A.jpg"}, {"tag": "Challenge 2 · 44–46 min", "title": "The Stowaway", "accent": "#B5155A", "quote": "One species has sneaked into the wrong home.", "sub": "Your teacher has secretly swapped one card on your poster.", "bullets": ["Check every card against its ecosystem's key features.", "Find the stowaway and move it to its true home.", "Write one sentence: why could it NOT survive where it was?"], "exit": null, "remember": "Bonus point: name the exact adaptation that gave it away.", "img": "img/sheet-06-B.jpg"}, {"tag": "Challenge 3 · 46–48 min", "title": "Climate Shift", "accent": "#C9432B", "quote": "Breaking news: Grassland rainfall has halved for ten years.", "sub": "Which ecosystem is it starting to look like?", "bullets": ["Which grassland species would struggle first?", "Which species from another ecosystem might move in?", "Draw a ‘Climate Shift’ arrow on your poster between the two pieces."], "exit": null, "remember": "Bonus point: explain why less grass means fewer zebras AND fewer lions.", "img": "img/sheet-06-C.jpg"}, {"tag": "Finale · 48–50 min", "title": "The Big Picture", "accent": "#22364D", "quote": "Step back — five pieces, one planet.", "sub": null, "bullets": ["Hold up your finished posters.", "Teacher reveals each group's Stowaway."], "exit": ["Name one adaptation from an ecosystem that wasn't yours.", "Why couldn't a camel survive in the rainforest?", "Which ecosystem would you protect first — and why?"], "remember": "Remember: every ecosystem is connected — change one piece and the whole picture changes.", "img": "img/sheet-06-D.jpg"}], "bonus": [{"title": "The Goldfish Invasion", "tag": "Bonus Challenge · Invader", "icon": "🐟", "accent": "#B5155A", "q": "Someone has tipped their unwanted pet goldfish into the local pond.", "sub": "Five years later, the native fish are disappearing.", "steps": ["Which piece of your poster is under attack?", "Use the food chain: who loses food, and who loses their home?", "Suggest one way to stop this happening again."], "bonus": "Bonus point: explain why an invader with no natural predators spreads so fast."}, {"title": "Lightning Strike", "tag": "Bonus Challenge · Wildfire", "icon": "🔥", "accent": "#C7751F", "q": "Lightning sparks a fire across the grassland — and into the edge of the rainforest.", "sub": "Same fire. Two very different endings.", "steps": ["Why will the grassland recover within weeks?", "Why could the rainforest take decades to recover?", "Add a fire symbol to both pieces of your poster, with a one-line note on each."], "bonus": "Bonus point: use the words ‘adaptation’ and ‘recover’ in your answer."}]};
+const ECO = Object.fromEntries(DATA.ecos.map(e => [e.key, e]));
+const KEYS = DATA.ecos.map(e => e.key);
+const PHASE_MIN = [5, 15, 5, 15, 4, 2, 2, 2];
+
+const QUIZ = {
+  rainforest: [
+    ["Why is rainforest soil poor?", ["Most nutrients are stored in the living plants", "It is mostly sand", "It is too cold for roots", "Animals eat the soil"], 0],
+    ["What do drip-tip leaves do?", ["Shed heavy rain quickly", "Store water for dry months", "Trap insects", "Keep the leaf warm"], 0],
+    ["Which layer catches most of the sunlight?", ["The canopy", "The forest floor", "The understory", "The roots"], 0],
+    ["In the food chain on your card, what eats the caterpillar?", ["Tree frog", "Tree snake", "Leaves", "Jaguar"], 0]],
+  desert: [
+    ["What makes somewhere a desert?", ["Very low rainfall", "Very high temperatures", "Sand dunes", "Cacti"], 0],
+    ["Why are many desert animals nocturnal?", ["They hunt in the cool night", "They see better in the dark", "They are looking for snow", "They sunbathe all day"], 0],
+    ["How do a fennec fox's huge ears help it?", ["They let body heat escape", "They store water", "They scare predators", "They help it dig"], 0],
+    ["Which is the largest desert on Earth?", ["Antarctica", "The Sahara", "The Gobi", "The Arabian Desert"], 0]],
+  grassland: [
+    ["Why does grass survive grazing and fire?", ["It grows from its base and roots", "It has thorns", "It tastes bad", "It only grows in winter"], 0],
+    ["What do natural grassland fires do?", ["Stop trees and shrubs taking over", "Destroy the grassland for ever", "Make the soil salty", "Only happen because of people"], 0],
+    ["Why do zebras live in herds?", ["Safety in numbers", "To keep warm", "To share water bottles", "Because grass is rare"], 0],
+    ["What is a savanna?", ["A tropical grassland with scattered trees", "A dry desert", "A wetland", "A kind of rainforest"], 0]],
+  freshwater: [
+    ["What causes an algal bloom?", ["Too many nutrients, such as fertiliser runoff", "Too much salt", "Very cold weather", "Beaver dams"], 0],
+    ["About how much of Earth's water is fresh?", ["About 3%", "About 30%", "About half", "About 97%"], 0],
+    ["How do fish get oxygen?", ["Their gills take it from the water", "They gulp air at the surface", "From the algae they eat", "Through their scales"], 0],
+    ["Which tiny producers feed almost everything in freshwater?", ["Algae and plankton", "Otters", "Trout", "Mayfly nymphs"], 0]],
+  tundra: [
+    ["What is permafrost?", ["Ground that stays frozen all year", "Snow that never melts on top", "A type of lichen", "A frozen lake"], 0],
+    ["Why are there no trees on the tundra?", ["Roots can't grow into frozen ground and summer is too short", "There is too much rain", "Animals eat every tree", "There is too much sunlight"], 0],
+    ["How do short ears and legs help an arctic fox?", ["They lose less body heat", "They help it run faster", "They help it hear better", "They help it dig"], 0],
+    ["What happens to the tundra in summer?", ["The top soil thaws into boggy ground full of flowers", "It stays covered in snow", "It turns into a sandy desert", "The sea floods it"], 0]],
+};
+// shuffle quiz options once per load so the right answer isn't always first
+const rnd = (n) => Math.floor(Math.random() * n);
+for (const k of KEYS) QUIZ[k] = QUIZ[k].map(([q, o, a]) => {
+  const order = o.map((_, i) => i).sort(() => Math.random() - .5);
+  return { q, opts: order.map(i => o[i]), ans: order.indexOf(a) };
+});
+
+const CLIMATE = [
+  { q: "Grassland rainfall has halved for ten years. Which ecosystem is it starting to look like?", opts: ["Desert", "Rainforest", "Freshwater", "Tundra"], ans: 0,
+    why: "Less than about 250 mm of rain a year is desert territory. Grass dies back and bare, dry ground spreads." },
+  { q: "Why would there be fewer lions as well as fewer zebras?", opts: ["Less grass means fewer zebras, so lions have less food", "Lions don't like hot weather", "Lions move to the rainforest", "Lions eat grass too"], ans: 0,
+    why: "Energy flows along the food chain: grass → zebra → lion. Shrink the bottom and every level above it shrinks too." },
+  { q: "Which species from the Species Cards could move into the drying grassland?", opts: ["Scorpion", "Poison dart frog", "Otter", "Caribou"], ans: 0,
+    why: "Scorpions can survive more than a year without eating and are built for dry, hot ground." },
+];
+
+/* ---------- state ---------- */
+const STORE = "biome-builders-v1";
+const fresh = () => ({
+  role: null,
+  student: { name: "", eco: null, tab: "card", plan: { hook: "", ask: "" }, quiz: {}, passport: {}, connections: {}, exit: ["", "", ""] },
+  poster: { tab: "build", sel: null, pieces: {}, order: null, place: {}, picked: null, checked: false, firstTry: null,
+            stow: null, climate: {}, climateNote: "" },
+  teacher: { phase: 0, remaining: PHASE_MIN[0] * 60, endsAt: null },
+});
+let S;
+try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(STORE) || "null") || {}); } catch (e) { S = fresh(); }
+let saveT;
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }, 250); }
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const $ = (sel) => document.querySelector(sel);
+const app = $("#app");
+
+/* ---------- shared bits ---------- */
+function ecoChip(k) { const e = ECO[k]; return `<span class="chip eco-${k}">${e.icon} ${esc(e.name)}</span>`; }
+function pics(e) {
+  return `<div class="pics">${e.panels.map(p => p.img
+    ? `<figure class="pic" style="margin:0"><img src="${p.img}" alt="${esc(p.desc)}" loading="lazy"><figcaption class="cap">${esc(p.caption)}</figcaption></figure>`
+    : `<figure class="pic ph" style="margin:0"><div><div class="big">${e.icon}</div><p>${esc(p.desc)}</p></div><figcaption class="cap">${esc(p.caption)}</figcaption></figure>`).join("")}</div>`;
+}
+function chainHTML(e) {
+  return `<div class="chain">${e.chain.map(([kind, what], i) =>
+    `${i ? '<span class="arrow" aria-hidden="true">→</span>' : ""}<div class="link k-${kind.split(" ")[0]}"><b>${esc(kind)}</b><span>${esc(what)}</span></div>`).join("")}</div>`;
+}
+function setWho() {
+  const w = $("#who"); let h = "";
+  if (S.role === "student" && S.student.eco) h = `${S.student.name ? esc(S.student.name) + " · " : ""}<span class="chip">${ECO[S.student.eco].icon} ${esc(ECO[S.student.eco].name)} expert</span>`;
+  if (S.role === "poster") h = `<span class="chip">🧩 Group poster</span>`;
+  if (S.role === "teacher") h = `<span class="chip">⏱ Teacher screen</span>`;
+  w.innerHTML = h;
+}
+
+/* ---------- home ---------- */
+function viewHome() {
+  return `<section class="hero tinted">
+    <span class="eyebrow">Grade 8 Science · Ecosystems jigsaw</span>
+    <h1>Five ecosystems. Five experts. One jigsaw.</h1>
+    <p>Become the class expert on one ecosystem, then teach your home group and build the planet-sized jigsaw together. Choose what this device is for.</p>
+    <div class="ecostrip" aria-hidden="true">${KEYS.map(k => `<span class="eco-${k}"></span>`).join("")}</div>
+  </section>
+  <section class="roles">
+    <button class="role" data-act="role" data-v="student"><span class="ic">🧑‍🔬</span><h2>I'm a student</h2><p>Your own device. Read your Expert Card, pass the Expert Check, and fill in your Notes Passport while others teach.</p></button>
+    <button class="role" data-act="role" data-v="poster"><span class="ic">🧩</span><h2>Our group's poster</h2><p>One shared device per home group. Build the jigsaw as each expert teaches, then play the three species challenges.</p></button>
+    <button class="role" data-act="role" data-v="teacher"><span class="ic">⏱</span><h2>Teacher screen</h2><p>For the projector. Shows each phase with its picture, steps and a countdown that runs the whole 50 minutes.</p></button>
+  </section>
+  <section class="panel">
+    <h2>How the devices fit together</h2>
+    <div class="how">
+      <div><b>Expert Huddle</b>Every student uses their own device in the "I'm a student" view.</div>
+      <div><b>Home groups</b>Each home group opens "Our group's poster" on one device they gather round.</div>
+      <div><b>Teacher</b>The projector runs the "Teacher screen" so everyone sees the phase and the clock.</div>
+      <div><b>Saved on each device</b>Work is saved in this browser only. Nothing syncs between devices, so no logins are needed.</div>
+    </div>
+  </section>`;
+}
+
+/* ---------- student ---------- */
+const STU_TABS = [["card", "Expert Card"], ["check", "Expert Check"], ["passport", "Notes Passport"], ["exit", "Exit ticket"]];
+function quizPassed() { const k = S.student.eco; const r = S.student.quiz[k] || {}; return QUIZ[k].filter((q, i) => r[i] === q.ans).length >= 3 && Object.keys(r).length === QUIZ[k].length; }
+function viewStudent() {
+  const st = S.student;
+  if (!st.eco) return `<section class="panel tinted">
+      <span class="eyebrow">Step 1</span><h2>Which expert group are you in?</h2>
+      <label for="sname">Your first name<input id="sname" data-bind="student.name" value="${esc(st.name)}" autocomplete="given-name" placeholder="e.g. Amira"></label>
+      <div class="ecos">${KEYS.map(k => { const e = ECO[k]; return `<button class="eco-pick eco-${k}" data-act="pickeco" data-v="${k}"><span class="ic">${e.icon}</span><h3>${esc(e.name)}</h3><span>${esc(e.badge)}</span></button>`; }).join("")}</div>
+      <p class="note">Your teacher will tell you which ecosystem your group is studying.</p>
+    </section>`;
+  const e = ECO[st.eco];
+  const tabs = `<nav class="tabs eco-${st.eco}" aria-label="Student steps">${STU_TABS.map(([k, l]) => {
+    const done = (k === "check" && quizPassed());
+    return `<button class="tab" data-act="stab" data-v="${k}" aria-current="${st.tab === k}">${l}${done ? ' <span class="tick">✓</span>' : ""}</button>`; }).join("")}</nav>`;
+  let body = "";
+  if (st.tab === "card") body = expertCard(e);
+  if (st.tab === "check") body = expertCheck(e);
+  if (st.tab === "passport") body = passport();
+  if (st.tab === "exit") body = exitTicket();
+  return `<div class="eco-${st.eco}" style="display:grid;gap:18px">${tabs}${body}</div>`;
+}
+function expertCard(e) {
+  return `<div class="xhead"><div class="ic">${e.icon}</div><div><span class="eyebrow" style="color:#fff;opacity:.85">Expert Card · Grade 8 Ecosystems</span><h1>${esc(e.name)} Expert</h1></div><span class="badge">${esc(e.badge)}</span></div>
+  ${pics(e)}
+  <div class="facts">${e.facts.map(([k, v]) => `<div class="fact"><b>${esc(k)}</b><p>${esc(v)}</p></div>`).join("")}</div>
+  <section class="panel"><h3>Food chain <span class="note" style="font-weight:500">· every arrow shows energy passing from the food to the feeder</span></h3>${chainHTML(e)}<p class="note">${esc(e.chain_note)}</p></section>
+  <div class="two"><div class="list good"><h3>Adaptations: how life survives here</h3><ul>${e.adaptations.map(a => `<li>${esc(a)}</li>`).join("")}</ul></div>
+  <div class="list bad"><h3>Threats: what puts it at risk</h3><ul>${e.threats.map(a => `<li>${esc(a)}</li>`).join("")}</ul></div></div>
+  <section class="panel"><h3>Key terms</h3><div class="terms">${e.key_terms.map(([n, d]) => `<div class="term"><b>${esc(n)}</b><span>${esc(d)}</span></div>`).join("")}</div></section>
+  <div class="mistake"><b>Common mistake.</b> ${esc(e.tip)}</div>
+  <section class="panel"><h3>Plan your teach-back</h3><p class="note">You get about 3 minutes in your home group. Hook them first, then fill your jigsaw piece as you talk.</p>
+    <div class="grid2"><label for="phook">My hook fact<textarea id="phook" data-bind="student.plan.hook" placeholder="The most surprising thing about ${esc(e.name.toLowerCase())}…">${esc(S.student.plan.hook)}</textarea></label>
+    <label for="pask">My question for the group<textarea id="pask" data-bind="student.plan.ask" placeholder="Something to check they were listening…">${esc(S.student.plan.ask)}</textarea></label></div>
+    <div class="row"><button class="btn" data-act="stab" data-v="check">Take the Expert Check →</button></div></section>`;
+}
+function expertCheck(e) {
+  const k = S.student.eco; const r = S.student.quiz[k] || {};
+  const qs = QUIZ[k].map((q, i) => {
+    const answered = r[i] !== undefined;
+    return `<div class="q"><h3>${i + 1}. ${esc(q.q)}</h3><div class="opts">${q.opts.map((o, j) => {
+      let st = ""; if (answered && j === q.ans) st = "right"; else if (answered && j === r[i]) st = "wrong";
+      return `<button class="opt" data-act="quiz" data-q="${i}" data-v="${j}" ${answered ? "disabled" : ""} data-state="${st}">${esc(o)}</button>`; }).join("")}</div></div>`; }).join("");
+  const n = Object.keys(r).length, right = QUIZ[k].filter((q, i) => r[i] === q.ans).length;
+  let foot = `<p class="note">Answer all four. Get 3 or more right to become a certified expert.</p>`;
+  if (n === QUIZ[k].length) foot = quizPassed()
+    ? `<div class="cert pop"><span class="ic">🏅</span><div><h3>Certified ${esc(e.name)} Expert · ${right}/4</h3><p class="note">You're ready to teach. Fill in your own box of the Notes Passport next.</p></div></div><div class="row"><button class="btn" data-act="stab" data-v="passport">Open my Notes Passport →</button></div>`
+    : `<div class="mistake"><b>${right}/4.</b> Not quite yet. Re-read your Expert Card with your group, then try again.</div><div class="row"><button class="btn ghost" data-act="quizreset">Try the Expert Check again</button></div>`;
+  return `<section class="panel"><span class="eyebrow">Expert Check</span><h2>Are you ready to teach ${esc(e.name)}?</h2>${qs}${foot}</section>`;
+}
+function passport() {
+  const st = S.student;
+  const order = [st.eco, ...KEYS.filter(k => k !== st.eco)];
+  const f = (k, field, label, ph = "") => `<label for="pp-${k}-${field}">${label}<input id="pp-${k}-${field}" data-bind="student.passport.${k}.${field}" value="${esc((st.passport[k] || {})[field])}" placeholder="${esc(ph)}"></label>`;
+  const boxes = order.map(k => { const e = ECO[k]; const mine = k === st.eco;
+    return `<section class="ppbox eco-${k} ${mine ? "mine" : ""}"><h3>${e.icon} ${esc(e.name)}${mine ? ' <span class="chip">my ecosystem</span>' : ""}</h3>
+      ${f(k, "climate", "Climate")}${f(k, "population", "Population")}${f(k, "species", "2 species")}
+      <label>Food chain<div class="chainin">${[0, 1, 2, 3].map(i => `<input id="pp-${k}-c${i}" aria-label="Food chain step ${i + 1}" data-bind="student.passport.${k}.c${i}" value="${esc((st.passport[k] || {})["c" + i])}" placeholder="${["producer", "eats it", "eats that", "top"][i]}">`).join("")}</div></label>
+      <div class="grid2" style="gap:9px">${f(k, "adapt", "1 adaptation")}${f(k, "threat", "1 threat")}</div>
+      ${f(k, "special", "What makes it special")}
+      ${mine ? "" : f(k, "q", "My question for the expert")}</section>`; }).join("");
+  const c = (field, label) => `<label for="cn-${field}">${label}<textarea id="cn-${field}" data-bind="student.connections.${field}">${esc(st.connections[field])}</textarea></label>`;
+  return `<section style="display:grid;gap:6px"><span class="eyebrow">Notes Passport</span><h2>Fill your own box now. Fill the others as each expert teaches.</h2></section>
+  <div class="pp">${boxes}<section class="ppbox tinted" style="--a:var(--brand)"><h3>🧩 Connections</h3>${c("alike", "Which two ecosystems are most alike? Why?")}${c("diff", "Which two are most different? Why?")}${c("threat", "Which one is most under threat?")}</section></div>
+  <p class="note">Saved on this device as you type.</p>`;
+}
+function exitTicket() {
+  const Q = ["Name one adaptation from an ecosystem that wasn't yours.", "Why couldn't a camel survive in the rainforest?", "Which ecosystem would you protect first, and why?"];
+  return `<section class="panel"><span class="eyebrow">The Big Picture · last 2 minutes</span><h2>Exit ticket</h2>
+  ${Q.map((q, i) => `<label for="ex${i}">${i + 1}. ${q}<textarea id="ex${i}" data-bind="student.exit.${i}">${esc(S.student.exit[i])}</textarea></label>`).join("")}
+  <p class="note">Show this screen to your teacher when you're done.</p>
+  <div class="row"><button class="btn quiet" data-act="reset-student" id="rs">Start again as a different student</button></div></section>`;
+}
+
+/* ---------- poster device ---------- */
+const POS_TABS = [["build", "1 · Build the jigsaw"], ["sort", "2 · Species Sort"], ["stow", "3 · The Stowaway"], ["climate", "4 · Climate Shift"], ["done", "5 · The Big Picture"]];
+const PIECE_FIELDS = [["population", "Population"], ["species", "2 species we found"], ["feature", "Key feature"], ["chain", "Food chain"], ["special", "What makes it special"]];
+const pieceDone = (k) => PIECE_FIELDS.every(([f]) => ((S.poster.pieces[k] || {})[f] || "").trim());
+const sortPerfect = () => S.poster.checked && DATA.species.every(s => S.poster.place[s.name] === s.eco);
+function posterSVG(opts = {}) {
+  const P = S.poster;
+  const pieces = KEYS.map(k => { const e = ECO[k];
+    return `<path class="piece ${P.sel === k && opts.interactive ? "sel" : ""}" d="${e.piece.d}" fill="${e.accent}" fill-opacity=".18" stroke="${e.accent}" stroke-width="1.3" ${opts.interactive ? `data-act="selpiece" data-v="${k}" tabindex="0" role="button" aria-label="${esc(e.name)} piece"` : ""}/>`; }).join("");
+  const cards = KEYS.map(k => { const e = ECO[k]; const [cx, cy, w, h] = e.piece.card; const v = P.pieces[k] || {};
+    const filled = PIECE_FIELDS.filter(([f]) => (v[f] || "").trim());
+    const inner = filled.length ? filled.map(([f, l]) => `<div><span class="l">${l}</span> ${esc(v[f])}</div>`).join("") : `<div class="e">Tap this piece and let the ${esc(e.name)} expert fill it in.</div>`;
+    return `<foreignObject x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" style="pointer-events:none"><div class="pcard eco-${k}"><div class="t">${e.icon} Zone ${e.letter} · ${esc(e.name)}</div>${inner}</div></foreignObject>`; }).join("");
+  return `<svg class="poster" viewBox="0 0 420 297" role="img" aria-label="Ecosystem jigsaw poster">
+    <rect width="420" height="297" style="fill:var(--surface)"/>
+    <text x="15" y="19" class="hubtxt" style="font-size:10px">Ecosystems of Earth</text>
+    ${pieces}<path d="${DATA.hub}" style="fill:var(--sunk);stroke:var(--fg)" stroke-width="1.3"/>
+    <text x="210" y="157" text-anchor="middle" class="hubtxt">ECOSYSTEMS</text><text x="210" y="166" text-anchor="middle" class="hubtxt">OF EARTH</text>
+    <text x="210" y="174" text-anchor="middle" class="hubsub">5 biomes, 1 planet</text>${cards}</svg>`;
+}
+function viewPoster() {
+  const P = S.poster;
+  const unlocked = { build: true, sort: true, stow: sortPerfect(), climate: true, done: true };
+  const tabs = `<nav class="tabs tinted" aria-label="Poster steps">${POS_TABS.map(([k, l]) => `<button class="tab" data-act="ptab" data-v="${k}" aria-current="${P.tab === k}">${l}</button>`).join("")}</nav>`;
+  let body = "";
+  if (P.tab === "build") body = posterBuild();
+  if (P.tab === "sort") body = posterSort();
+  if (P.tab === "stow") body = unlocked.stow ? posterStow() : `<section class="panel"><h2>The Stowaway unlocks after a perfect Species Sort</h2><p>Finish Species Sort with every card in the right ecosystem, then come back.</p><div class="row"><button class="btn" data-act="ptab" data-v="sort">Go to Species Sort</button></div></section>`;
+  if (P.tab === "climate") body = posterClimate();
+  if (P.tab === "done") body = posterDone();
+  return `<div style="display:grid;gap:18px">${tabs}${body}</div>`;
+}
+function posterBuild() {
+  const P = S.poster; const k = P.sel;
+  const status = `<div class="pieces-status">${KEYS.map(x => `<span class="chip eco-${x}">${ECO[x].icon} ${esc(ECO[x].name)} ${pieceDone(x) ? "✓" : "…"}</span>`).join("")}</div>`;
+  let ed = `<section class="panel"><h3>Tap a jigsaw piece to fill it in</h3><p class="note">Each expert gets about 3 minutes: teach first, then fill your own piece while the group watches. Listeners fill in their Notes Passports on their own devices.</p></section>`;
+  if (k) { const e = ECO[k]; const v = P.pieces[k] || {};
+    ed = `<section class="panel editor eco-${k}"><h2 style="color:var(--a-ink)">${e.icon} ${esc(e.name)} piece</h2><p class="note">Only the ${esc(e.name)} expert writes here.</p>
+      <div class="grid2">${PIECE_FIELDS.map(([f, l]) => `<label for="pc-${k}-${f}">${l}<input id="pc-${k}-${f}" data-bind="poster.pieces.${k}.${f}" value="${esc(v[f])}"></label>`).join("")}</div>
+      <div class="row"><button class="btn" data-act="nextpiece">${pieceDone(k) ? "Piece done · next expert →" : "Next expert →"}</button></div></section>`; }
+  return `<section style="display:grid;gap:6px"><span class="eyebrow">Phase 4 · Teach &amp; Build</span><h2>Build the jigsaw, one expert at a time</h2></section>${status}<div class="poster-wrap">${posterSVG({ interactive: true })}</div>${ed}`;
+}
+function ensureDeck() { if (!S.poster.order) { S.poster.order = DATA.species.map(s => s.name).sort(() => Math.random() - .5); save(); } }
+function posterSort() {
+  ensureDeck(); const P = S.poster; const sp = Object.fromEntries(DATA.species.map(s => [s.name, s]));
+  const left = P.order.filter(n => !P.place[n]);
+  const zone = (k) => { const e = ECO[k]; const here = P.order.filter(n => P.place[n] === k);
+    return `<div class="zone eco-${k} ${P.picked ? "ready" : ""}" data-act="drop" data-v="${k}"><div class="row" style="justify-content:space-between"><h3>${e.icon} ${esc(e.name)} <span class="note">(${here.length})</span></h3>${P.picked ? `<button class="btn" style="padding:5px 10px;font-size:.8rem" data-act="drop" data-v="${k}">Place here</button>` : ""}</div>
+      <div class="placed">${here.map(n => { const cls = P.checked ? (sp[n].eco === k ? "right" : "wrong") : ""; return `<button class="pchip ${cls}" data-act="unplace" data-v="${esc(n)}" aria-label="Send ${esc(n)} back to the deck">${esc(n)} ×</button>`; }).join("")}</div></div>`; };
+  const right = DATA.species.filter(s => P.place[s.name] === s.eco).length;
+  let status = `<p class="note">Tap a card, then tap the ecosystem it belongs to. Read every clue out loud first. The expert for that ecosystem has the final say, but must give a reason.</p>`;
+  if (!left.length && !P.checked) status = `<div class="row"><button class="btn tinted" style="--a:var(--brand)" data-act="checksort">Check our sort</button><span class="note">All 25 cards are placed.</span></div>`;
+  if (P.checked) status = sortPerfect()
+    ? `<div class="cert tinted pop" style="--a:var(--good)"><span class="ic">🎉</span><div><h3>Perfect sort · 25/25${P.firstTry != null ? ` (first try: ${P.firstTry}/25)` : ""}</h3><p class="note">Now watch out… something is about to sneak into the wrong home.</p></div><button class="btn" style="margin-left:auto;background:var(--brand);color:var(--brand-fg)" data-act="ptab" data-v="stow">Start The Stowaway →</button></div>`
+    : `<div class="mistake"><b>${right}/25 correct.</b> The red cards are in the wrong place. Tap them to send them back to the deck, re-read their clues, then try again.</div>`;
+  return `<section style="display:grid;gap:6px"><span class="eyebrow">Challenge 1 · Species Sort</span><h2>25 species. 5 ecosystems. Only clues.</h2></section>${status}
+  <div class="zones">${KEYS.map(zone).join("")}</div>
+  <section class="panel"><h3>Species deck · ${left.length} left</h3>${left.length ? `<div class="deck">${left.map(n => `<button class="card" data-act="pick" data-v="${esc(n)}" aria-pressed="${P.picked === n}"><b>${esc(n)}</b><span>${esc(sp[n].clue)}</span></button>`).join("")}</div>` : `<p class="note">Deck empty.</p>`}</section>`;
+}
+function startStow() {
+  const sp = DATA.species[rnd(DATA.species.length)];
+  const wrong = KEYS.filter(k => k !== sp.eco); const to = wrong[rnd(wrong.length)];
+  S.poster.stow = { name: sp.name, from: sp.eco, to, misses: 0, found: false, home: null, why: "" }; save();
+}
+function posterStow() {
+  const P = S.poster; if (!P.stow) startStow(); const st = P.stow; const sp = Object.fromEntries(DATA.species.map(s => [s.name, s]));
+  const placeOf = (n) => n === st.name ? st.to : sp[n].eco;
+  const zones = KEYS.map(k => { const e = ECO[k]; const here = DATA.species.filter(s => placeOf(s.name) === k).map(s => s.name);
+    return `<div class="zone eco-${k}"><h3>${e.icon} ${esc(e.name)}</h3><span class="placed">${here.map(n => `<button class="pchip ${st.found && n === st.name ? "wrong" : ""}" data-act="stowtap" data-v="${esc(n)}" ${st.found ? "disabled" : ""}>${esc(n)}</button>`).join("")}</span></div>`; }).join("");
+  let step = `<p class="note">One species has sneaked into the wrong home. Check every card against its ecosystem's key features, then tap the stowaway.${st.misses ? ` <span class="no">Wrong guesses: ${st.misses}</span>` : ""}</p>`;
+  if (st.found) {
+    const s = sp[st.name];
+    step = `<section class="panel tinted" style="--a:var(--bad)"><h3>Found it: the ${esc(st.name)} doesn't belong in the ${esc(ECO[st.to].name)}!</h3><p class="note">Its clue: “${esc(s.clue)}”</p>
+      <h3>Where does it really live?</h3><div class="row">${KEYS.filter(k => k !== st.to).map(k => `<button class="btn ${st.home === k ? "" : "ghost"} eco-${k}" data-act="stowhome" data-v="${k}">${ECO[k].icon} ${esc(ECO[k].name)}</button>`).join("")}</div>
+      ${st.home ? (st.home === st.from ? `<p class="ok">Correct, it belongs in the ${esc(ECO[st.from].name)}.</p>` : `<p class="no">Not there. Look at the clue again.</p>`) : ""}
+      ${st.home === st.from ? `<label for="stwhy">Write one sentence: why could it NOT survive in the ${esc(ECO[st.to].name)}? Name the adaptation that gave it away.<textarea id="stwhy" data-bind="poster.stow.why">${esc(st.why)}</textarea></label>
+      <div class="row"><button class="btn" data-act="ptab" data-v="climate">Next: Climate Shift →</button><button class="btn ghost" data-act="stownew">Play another Stowaway</button></div>` : ""}</section>`;
+  }
+  return `<section style="display:grid;gap:6px"><span class="eyebrow">Challenge 2 · The Stowaway</span><h2>One species has sneaked into the wrong home</h2></section>${step}<div class="zones">${zones}</div>`;
+}
+function posterClimate() {
+  const P = S.poster;
+  const qs = CLIMATE.map((q, i) => { const a = P.climate[i];
+    return `<div class="q"><h3>${i + 1}. ${esc(q.q)}</h3><div class="opts">${q.opts.map((o, j) => { let st = ""; if (a !== undefined && j === q.ans) st = "right"; else if (a === j) st = "wrong";
+      return `<button class="opt" data-act="climate" data-q="${i}" data-v="${j}" ${a !== undefined ? "disabled" : ""} data-state="${st}">${esc(o)}</button>`; }).join("")}</div>${a !== undefined ? `<p class="note">${esc(q.why)}</p>` : ""}</div>`; }).join("");
+  return `<section class="panel eco-grassland"><span class="eyebrow">Challenge 3 · Climate Shift</span><h2>Breaking news: Grassland rainfall has halved for ten years</h2>
+    <figure class="pic" style="margin:0;max-width:640px"><img src="img/sheet-06-C.jpg" alt="Golden grassland drying into cracked desert"></figure>${qs}
+    <label for="clnote">Which grassland species would struggle first? Why?<textarea id="clnote" data-bind="poster.climateNote">${esc(P.climateNote)}</textarea></label>
+    <div class="row"><button class="btn" data-act="ptab" data-v="done">Finish: The Big Picture →</button></div></section>`;
+}
+function posterDone() {
+  const P = S.poster; const pieces = KEYS.filter(pieceDone).length;
+  const cl = CLIMATE.filter((q, i) => P.climate[i] === q.ans).length;
+  const stow = P.stow && P.stow.found && P.stow.home === P.stow.from;
+  const tile = (n, l) => `<div class="panel" style="gap:2px"><span class="score">${n}</span><span class="note">${l}</span></div>`;
+  return `<section style="display:grid;gap:6px"><span class="eyebrow">Finale · The Big Picture</span><h2>Step back: five pieces, one planet</h2></section>
+  <div class="poster-wrap">${posterSVG()}</div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${tile(`${pieces}/5`, "jigsaw pieces complete")}${tile(sortPerfect() ? `25/25` : `${DATA.species.filter(s => P.place[s.name] === s.eco).length}/25`, `species sorted${P.firstTry != null ? ` · first try ${P.firstTry}` : ""}`)}${tile(stow ? "Found" : "—", P.stow ? `stowaway (${P.stow.misses} wrong guesses)` : "stowaway not played")}${tile(`${cl}/3`, "Climate Shift answers")}</div>
+  <section class="panel"><h3>Fast finishers: bonus challenges</h3><div class="two">${DATA.bonus.map(b => `<div class="list tinted" style="--a:${b.accent}"><h3 style="background:${b.accent}">${b.icon} ${esc(b.title)}</h3><div style="padding:10px 12px;display:grid;gap:6px"><b>${esc(b.q)}</b><span class="note">${esc(b.sub)}</span><ul style="padding:0 0 0 18px">${b.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ul><span class="note">${esc(b.bonus)}</span></div></div>`).join("")}</div></section>
+  <section class="panel"><h3>Next class</h3><p class="note">Clear this device so the next home group starts with an empty jigsaw.</p><div class="row"><button class="btn quiet" data-act="reset-poster" id="rp">Clear this poster</button></div></section>`;
+}
+
+/* ---------- teacher ---------- */
+let tick;
+function remaining() { const T = S.teacher; return T.endsAt ? Math.round((T.endsAt - Date.now()) / 1000) : T.remaining; }
+const fmt = (s) => `${s < 0 ? "−" : ""}${Math.floor(Math.abs(s) / 60)}:${String(Math.abs(s) % 60).padStart(2, "0")}`;
+function viewTeacher() {
+  const T = S.teacher; const p = DATA.phases[T.phase]; const r = remaining(); const total = PHASE_MIN[T.phase] * 60;
+  let start = 0; for (let i = 0; i < T.phase; i++) start += PHASE_MIN[i];
+  return `<div class="stage tinted" style="--a:${p.accent}">
+    <section style="display:grid;gap:14px;min-width:0">
+      <span class="eyebrow">${esc(p.tag)}</span>
+      <h1 class="big-title">${esc(p.title)}</h1>
+      <img class="stage-img" src="${p.img}" alt="">
+      ${p.quote ? `<p class="quote">${esc(p.quote)}</p>` : ""}${p.sub ? `<p style="color:var(--a-ink);font-weight:800">${esc(p.sub)}</p>` : ""}
+      <ul>${p.bullets.map(b => `<li>${esc(b)}</li>`).join("")}</ul>
+      ${p.exit ? `<h3>Exit ticket</h3><ol style="margin:0;padding-left:22px">${p.exit.map(b => `<li>${esc(b)}</li>`).join("")}</ol>` : ""}
+      ${p.remember ? `<div class="remember">${esc(p.remember)}</div>` : ""}
+    </section>
+    <aside class="panel" style="position:sticky;top:76px">
+      <div class="clock ${r < 0 ? "late" : ""}" id="clock" aria-live="off">${fmt(r)}</div>
+      <div class="progress"><i id="prog" style="width:${Math.min(100, Math.max(0, 100 - r / total * 100))}%"></i></div>
+      <div class="row"><button class="btn" data-act="tgo">${T.endsAt ? "Pause" : "Start"}</button><button class="btn quiet" data-act="tadj" data-v="-60">−1 min</button><button class="btn quiet" data-act="tadj" data-v="60">+1 min</button></div>
+      <div class="row"><button class="btn ghost" data-act="tphase" data-v="${T.phase - 1}" ${T.phase ? "" : "disabled"}>← Back</button><button class="btn ghost" data-act="tphase" data-v="${T.phase + 1}" ${T.phase < 7 ? "" : "disabled"}>Next phase →</button></div>
+      <div class="phase-list">${DATA.phases.map((q, i) => { let s = 0; for (let j = 0; j < i; j++) s += PHASE_MIN[j];
+        return `<button class="ph-item tinted" style="--a:${q.accent}" data-act="tphase" data-v="${i}" aria-current="${i === T.phase}"><span class="dot"></span><span>${esc(q.title)}</span><small>${s}–${s + PHASE_MIN[i]} min</small></button>`; }).join("")}</div>
+      ${T.phase === 5 ? `<p class="note">The Stowaway runs itself on each group's poster device: it swaps one card automatically.</p>` : ""}
+    </aside></div>`;
+}
+function runClock() {
+  clearInterval(tick);
+  if (S.role !== "teacher") return;
+  tick = setInterval(() => { const c = $("#clock"); if (!c) return; const r = remaining(); c.textContent = fmt(r); c.classList.toggle("late", r < 0);
+    const pr = $("#prog"); if (pr) pr.style.width = Math.min(100, Math.max(0, 100 - r / (PHASE_MIN[S.teacher.phase] * 60) * 100)) + "%"; }, 250);
+}
+let wake = null;
+async function keepAwake() { try { wake = await navigator.wakeLock?.request("screen"); } catch (e) {} }
+
+/* ---------- render + events ---------- */
+function render() {
+  setWho();
+  app.innerHTML = S.role === "student" ? viewStudent() : S.role === "poster" ? viewPoster() : S.role === "teacher" ? viewTeacher() : viewHome();
+  runClock();
+}
+function setPath(path, val) {
+  const ks = path.split("."); let o = S;
+  for (let i = 0; i < ks.length - 1; i++) { if (o[ks[i]] == null || typeof o[ks[i]] !== "object") o[ks[i]] = {}; o = o[ks[i]]; }
+  o[ks.at(-1)] = val;
+}
+app.addEventListener("input", (ev) => {
+  const b = ev.target.dataset.bind; if (!b) return; setPath(b, ev.target.value); save();
+  if (b.startsWith("poster.pieces.")) { // live-update the poster without losing focus
+    const wrap = document.querySelector(".poster-wrap"); if (wrap) wrap.innerHTML = posterSVG({ interactive: true });
+    const sb = document.querySelector(".pieces-status"); if (sb) sb.outerHTML = `<div class="pieces-status">${KEYS.map(x => `<span class="chip eco-${x}">${ECO[x].icon} ${esc(ECO[x].name)} ${pieceDone(x) ? "✓" : "…"}</span>`).join("")}</div>`;
+  }
+});
+let armed = null;
+function arm(id, label, fn) {
+  const el = document.getElementById(id);
+  if (armed === id) { armed = null; fn(); return; }
+  armed = id; el.textContent = label; el.classList.add("confirm");
+  setTimeout(() => { if (armed === id) { armed = null; render(); } }, 4000);
+}
+document.addEventListener("click", (ev) => {
+  const t = ev.target.closest("[data-act]"); if (!t || t.disabled) return;
+  const a = t.dataset.act, v = t.dataset.v, P = S.poster;
+  switch (a) {
+    case "home": S.role = null; break;
+    case "role": S.role = v; if (v === "teacher") keepAwake(); break;
+    case "pickeco": S.student.eco = v; S.student.tab = "card"; window.scrollTo(0, 0); break;
+    case "stab": S.student.tab = v; window.scrollTo(0, 0); break;
+    case "quiz": { const k = S.student.eco; S.student.quiz[k] = S.student.quiz[k] || {}; S.student.quiz[k][t.dataset.q] = +v; break; }
+    case "quizreset": S.student.quiz[S.student.eco] = {}; break;
+    case "reset-student": return arm("rs", "Tap again to erase this student's work", () => { S.student = fresh().student; save(); render(); });
+    case "ptab": P.tab = v; window.scrollTo(0, 0); break;
+    case "selpiece": P.sel = v; setTimeout(() => document.querySelector(".editor input")?.focus(), 30); break;
+    case "nextpiece": { const i = KEYS.indexOf(P.sel); P.sel = KEYS.find((k, j) => j > i && !pieceDone(k)) || KEYS.find(k => !pieceDone(k)) || null; break; }
+    case "pick": P.picked = P.picked === v ? null : v; break;
+    case "drop": if (!P.picked) return; P.place[P.picked] = v; P.picked = null; P.checked = false; break;
+    case "unplace": ev.stopPropagation(); delete P.place[v]; P.checked = false; break;
+    case "checksort": P.checked = true; if (P.firstTry == null) P.firstTry = DATA.species.filter(s => P.place[s.name] === s.eco).length; break;
+    case "stowtap": if (v === P.stow.name) P.stow.found = true; else { P.stow.misses++; t.classList.add("pop"); } break;
+    case "stowhome": P.stow.home = v; break;
+    case "stownew": startStow(); break;
+    case "climate": P.climate[t.dataset.q] = +v; break;
+    case "reset-poster": return arm("rp", "Tap again to clear the whole poster", () => { S.poster = fresh().poster; save(); render(); window.scrollTo(0, 0); });
+    case "tgo": { const T = S.teacher; if (T.endsAt) { T.remaining = remaining(); T.endsAt = null; } else { T.endsAt = Date.now() + T.remaining * 1000; keepAwake(); } break; }
+    case "tadj": { const T = S.teacher; if (T.endsAt) T.endsAt += +v * 1000; else T.remaining += +v; break; }
+    case "tphase": { const T = S.teacher; const n = Math.max(0, Math.min(7, +v)); const run = !!T.endsAt; T.phase = n; T.remaining = PHASE_MIN[n] * 60; T.endsAt = run ? Date.now() + T.remaining * 1000 : null; break; }
+    default: return;
+  }
+  save(); render();
+});
+document.addEventListener("keydown", (ev) => {
+  if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches('[role="button"][data-act]')) { ev.preventDefault(); ev.target.click(); }
+});
+render();
+</script>
+
+</body></html>
